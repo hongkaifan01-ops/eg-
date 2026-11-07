@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>EG AI 助手</title>
+    <link rel="stylesheet" href="sidepanel.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="brand">
+          <img src="icons/icon32.png" alt="EG" class="brand-icon" />
+          <div class="brand-text">
+            <div class="brand-name">EG AI 助手</div>
+            <div class="brand-sub" id="ai-state">检索 · 翻译 · 下载</div>
+          </div>
+        </div>
+        <div class="top-actions"><button class="icon-btn" id="reply-audio" title="开关自动朗读回复">朗读：开</button><button class="icon-btn" id="reply-stop">停止朗读</button><a class="icon-btn" href="downloader.html" target="_blank">下载器</a>
+          <button class="icon-btn" id="btn-summary" title="总结当前网页">要点</button>
+          <button class="icon-btn" id="btn-page-translate" title="翻译当前网页">译页</button>
+          <button class="icon-btn" id="btn-settings" title="设置">⚙</button>
+        </div>
+      </header>
+
+      <div style="padding:8px 14px"><label>输入模式 <select id="input-mode"><option value="chat">AI 对话</option><option value="tools">检索 / 翻译 / 下载</option></select></label></div><main class="messages" id="messages">
+        <section class="welcome" id="welcome">
+          <div class="welcome-title">用一句话告诉我要什么</div>
+          <div class="welcome-sub">我去检索相关网站、视频和图片、把英文翻成中文、总结网页要点，抖音/B站链接直接下。</div>
+          <div class="quick-grid">
+            <button class="quick-card" data-quick="search" data-q="找几个学 Rust 的中文教程网站">
+              <span class="qk-ico">🔎</span><span>找网站</span><small>列出相关站点</small>
+            </button>
+            <button class="quick-card" data-quick="video" data-q="量子力学 入门 视频讲解">
+              <span class="qk-ico">🎬</span><span>找视频</span><small>B站 / 抖音</small>
+            </button>
+            <button class="quick-card" data-quick="image" data-q="量子力学 示意图">
+              <span class="qk-ico">🖼️</span><span>找图片</span><small>百度 / 必应图库</small>
+            </button>
+            <button class="quick-card" data-quick="translate" data-q="">
+              <span class="qk-ico">🈶</span><span>翻译</span><small>英→中，自动识别</small>
+            </button>
+            <button class="quick-card" data-quick="summary" data-q="">
+              <span class="qk-ico">📄</span><span>总结本页</span><small>先看重点</small>
+            </button>
+            <button class="quick-card" data-quick="download-hint" data-q="">
+              <span class="qk-ico">⬇️</span><span>下载视频</span><small>抖音 / B站链接</small>
+            </button>
+          </div>
+          <div class="welcome-tip">
+            支持抖音/B站分享链接（含 <code>v.douyin.com/…</code> 口令）自动解析下载；英文内容会先翻译再处理。
+          </div>
+        </section>
+      </main>
+
+      <footer class="composer">
+        <div class="chips" id="chips">
+          <button class="chip" data-chip="image">搜图片</button>
+          <button class="chip" data-chip="translate-selection">翻译选中</button>
+          <button class="chip" data-chip="summary">总结本页</button>
+          <button class="chip" data-chip="page-translate">整页翻译</button>
+          <button class="chip" data-chip="download-hint">下载视频</button>
+        </div>
+        <div class="input-row">
+          <textarea id="input" rows="1" placeholder="例：找3个讲 Python 异步的中文网站；或直接粘贴抖音/B站分享链接"></textarea>
+          <button class="send-btn" id="btn-send" title="发送（Enter）">
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+              <path d="M3.4 20.4 21 12 3.4 3.6l.1 6.6L15 12 3.5 13.8z" fill="currentColor" />
+            </svg>
+          </button>
+        </div>
+        <div class="status-line">
+          <span id="hint">Enter 发送 · Shift+Enter 换行</span>
+          <span class="spacer"></span>
+          <span class="ai-dot" id="ai-dot"></span><span id="ai-label">未配置模型</span>
+        </div>
+      </footer>
+
+      <div class="drawer-mask hidden" id="mask"></div>
+      <aside class="drawer hidden" id="settings">
+        <div class="drawer-head">
+          <b>设置</b>
+          <button class="icon-btn" id="btn-close-settings">✕</button>
+        </div>
+        <div class="drawer-body">
+          <div class="field">
+            <label>API Base（OpenAI 兼容）</label>
+            <input id="cfg-apiBase" placeholder="https://api.deepseek.com/v1" />
+            <div class="tip">支持 DeepSeek / OpenAI / 通义 / Moonshot / 本地 vLLM 等兼容接口</div>
+          </div>
+          <div class="field">
+            <label>API Key</label>
+            <input id="cfg-apiKey" type="password" placeholder="sk-..." autocomplete="off" />
+          </div>
+          <div class="field">
+            <label>模型名</label>
+            <input id="cfg-model" placeholder="deepseek-chat" />
+          </div>
+          <div class="row">
+            <div class="field">
+              <label>目标语言</label>
+              <select id="cfg-targetLang">
+                <option value="zh-CN">简体中文</option>
+                <option value="zh-TW">繁體中文</option>
+                <option value="en">English</option>
+                <option value="ja">日本語</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>下载目录</label>
+              <input id="cfg-downloadDir" placeholder="EG-AI" />
+            </div>
+          </div>
+          <div class="field">
+            <label>翻译通道</label>
+            <select id="cfg-translateEngine">
+              <option value="auto">自动（AI 优先，失败降级必应）</option>
+              <option value="ai">只用 AI 模型</option>
+              <option value="bing">只用必应网页翻译</option>
+              <option value="mymemory">只用 MyMemory</option>
+            </select>
+          </div>
+          <label class="switch"><input type="checkbox" id="cfg-autoTranslatePage" /><span>英文网页自动插入中文译文</span></label>
+          <label class="switch"><input type="checkbox" id="cfg-autoTranslateInput" /><span>输入英文时先自动翻译</span></label>
+          <label class="switch"><input type="checkbox" id="cfg-autoSummaryOnOpen" /><span>打开侧边栏时自动总结当前网页</span></label>
+          <label class="switch"><input type="checkbox" id="cfg-videoSearch" /><span>检索时同时找相关视频</span></label>
+          <div class="field">
+            <label>网页 / 视频 / 图片 结果条数</label>
+            <div class="row">
+              <input id="cfg-maxWebResults" type="number" min="4" max="30" />
+              <input id="cfg-maxVideoResults" type="number" min="2" max="20" />
+              <input id="cfg-maxImageResults" type="number" min="3" max="30" />
+            </div>
+          </div>
+          <div class="drawer-actions">
+            <button class="btn primary" id="btn-save-settings">保存</button>
+            <button class="btn" id="btn-test-ai">测试模型</button>
+            <button class="btn ghost" id="btn-reset-settings">恢复默认</button>
+          </div>
+          <div class="test-result" id="test-result"></div>
+          <div class="drawer-note">
+            没有 API Key 也能用：检索走必应、翻译走必应/MyMemory、要点用本地抽取算法。填上 Key 后，回答更聪明、翻译更准。
+          </div>
+        </div>
+      </aside>
+
+      <div class="toast hidden" id="toast"></div>
+    </div>
+    <script type="module" src="sidepanel.js"></script>
+  </body>
+</html>
+
